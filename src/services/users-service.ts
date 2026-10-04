@@ -65,6 +65,38 @@ export async function loginUser(
   return { data: token };
 }
 
+export type CurrentUserResult =
+  | { data: { email: string; name: string } }
+  | { status: "error"; error: string };
+
+const USER_NOT_FOUND = "User tidak terdaftar";
+
+export async function getCurrentUser(
+  token: string
+): Promise<CurrentUserResult> {
+  const [session] = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.token, token))
+    .limit(1);
+
+  if (!session) {
+    return { status: "error", error: USER_NOT_FOUND };
+  }
+
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
+
+  if (!user) {
+    return { status: "error", error: USER_NOT_FOUND };
+  }
+
+  return { data: { email: user.email, name: user.name } };
+}
+
 export type LogoutResult = { data: string } | { error: string };
 
 export async function logoutUser(token: string): Promise<LogoutResult> {
