@@ -3,7 +3,9 @@ import {
   registerUser,
   loginUser,
   getCurrentUser,
+  logoutUser,
 } from "../services/users-service";
+import { extractBearerToken } from "../lib/auth";
 
 const UNAUTHORIZED = { status: "error", error: "User tidak terdaftar" };
 
@@ -46,10 +48,7 @@ export const usersRoute = new Elysia()
     }
   )
   .post("/user/current", async ({ headers, set }) => {
-    const authorization = headers["authorization"];
-    const token = authorization?.startsWith("Bearer ")
-      ? authorization.slice(7)
-      : null;
+    const token = extractBearerToken(headers);
 
     if (!token) {
       set.status = 401;
@@ -59,6 +58,22 @@ export const usersRoute = new Elysia()
     const result = await getCurrentUser(token);
 
     if ("status" in result) {
+      set.status = 401;
+    }
+
+    return result;
+  })
+  .delete("/user/current", async ({ headers, set }) => {
+    const token = extractBearerToken(headers);
+
+    if (!token) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+
+    const result = await logoutUser(token);
+
+    if ("error" in result) {
       set.status = 401;
     }
 

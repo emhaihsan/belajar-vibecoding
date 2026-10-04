@@ -96,3 +96,17 @@ export async function getCurrentUser(
 
   return { data: { email: user.email, name: user.name } };
 }
+
+export type LogoutResult = { data: string } | { error: string };
+
+export async function logoutUser(token: string): Promise<LogoutResult> {
+  const result = await db
+    .delete(sessions)
+    .where(eq(sessions.token, token));
+
+  if (result[0].affectedRows === 0) {
+    return { error: "Unauthorized" };
+  }
+
+  return { data: "OK" };
+}
