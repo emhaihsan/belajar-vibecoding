@@ -4,6 +4,7 @@ import {
   loginUser,
   logoutUser,
 } from "../services/users-service";
+import { extractBearerToken } from "../lib/auth";
 
 export const usersRoute = new Elysia()
   .post(
@@ -44,10 +45,7 @@ export const usersRoute = new Elysia()
     }
   )
   .delete("/user/current", async ({ headers, set }) => {
-    const authorization = headers["authorization"];
-    const token = authorization?.startsWith("Bearer ")
-      ? authorization.slice(7)
-      : null;
+    const token = extractBearerToken(headers);
 
     if (!token) {
       set.status = 401;

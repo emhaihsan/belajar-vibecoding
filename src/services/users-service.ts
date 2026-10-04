@@ -68,17 +68,13 @@ export async function loginUser(
 export type LogoutResult = { data: string } | { error: string };
 
 export async function logoutUser(token: string): Promise<LogoutResult> {
-  const [session] = await db
-    .select({ id: sessions.id })
-    .from(sessions)
-    .where(eq(sessions.token, token))
-    .limit(1);
+  const result = await db
+    .delete(sessions)
+    .where(eq(sessions.token, token));
 
-  if (!session) {
+  if (result[0].affectedRows === 0) {
     return { error: "Unauthorized" };
   }
-
-  await db.delete(sessions).where(eq(sessions.token, token));
 
   return { data: "OK" };
 }
