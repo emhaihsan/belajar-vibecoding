@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { users } from "../db/schema";
+import { users, sessions } from "../db/schema";
 
 export type RegisterInput = {
   name: string;
@@ -34,4 +34,33 @@ export async function registerUser(input: RegisterInput): Promise<RegisterResult
   });
 
   return { status: "OK" };
+}
+
+export type LoginResult = { data: string } | { status: "error"; error: string };
+
+const INVALID_CREDENTIALS = "Email atau password salah";
+
+export async function loginUser(
+  email: string,
+  password: string
+): Promise<LoginResult> {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  if (!user) {
+    return { status: "error", error: INVALID_CREDENTIALS };
+  }
+
+  const valid = await Bun.password.verify(password, user.password);
+  if (!valid) {
+    return { status: "error", error: INVALID_CREDENTIALS };
+  }
+
+  const token = crypto.randomUUID();
+  await db.insert(sessions).values({ token, userId: user.id });
+
+  return { data: token };
 }

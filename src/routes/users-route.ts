@@ -1,7 +1,8 @@
 import { Elysia, t } from "elysia";
-import { registerUser } from "../services/users-service";
+import { registerUser, loginUser } from "../services/users-service";
 
-export const usersRoute = new Elysia().post(
+export const usersRoute = new Elysia()
+  .post(
   "/user",
   async ({ body, set }) => {
     const result = await registerUser(body);
@@ -19,4 +20,22 @@ export const usersRoute = new Elysia().post(
       password: t.String(),
     }),
   }
-);
+)
+  .post(
+    "/user/login",
+    async ({ body, set }) => {
+      const result = await loginUser(body.email, body.password);
+
+      if ("status" in result) {
+        set.status = 401;
+      }
+
+      return result;
+    },
+    {
+      body: t.Object({
+        email: t.String(),
+        password: t.String(),
+      }),
+    }
+  );
